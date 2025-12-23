@@ -22,28 +22,31 @@ export function CompactProgress({
 }: CompactProgressProps) {
   const [progress, setProgress] = useState(0);
 
-  const isTranscribing = jobStatus.transcription === "running";
+  // ✅ Patch: jobStatus can be undefined/null depending on your Convex schema
+  const isTranscribing = jobStatus?.transcription === "running";
 
+  // ✅ Patch: use optional chaining for all jobStatus property reads
   // Count completed content generation steps (all 6 outputs)
   const contentSteps = [
-    jobStatus.keyMoments,
-    jobStatus.summary,
-    jobStatus.social,
-    jobStatus.titles,
-    jobStatus.hashtags,
-    jobStatus.youtubeTimestamps,
+    jobStatus?.keyMoments,
+    jobStatus?.summary,
+    jobStatus?.social,
+    jobStatus?.titles,
+    jobStatus?.hashtags,
+    jobStatus?.youtubeTimestamps,
   ];
+
   const completedSteps = contentSteps.filter((s) => s === "completed").length;
   const totalSteps = contentSteps.length;
 
   useEffect(() => {
     if (!isTranscribing) {
-      const stepProgress = (completedSteps / totalSteps) * 100;
+      const stepProgress = totalSteps > 0 ? (completedSteps / totalSteps) * 100 : 0;
       setProgress(stepProgress);
       return;
     }
 
-    // Tutorial: Calculate progress based on elapsed time vs estimated completion time
+    // Calculate progress based on elapsed time vs estimated completion time
     const updateProgress = () => {
       const estimate = estimateAssemblyAITime(fileDuration);
       const elapsed = Math.floor((Date.now() - createdAt) / 1000);
@@ -54,7 +57,7 @@ export function CompactProgress({
     updateProgress();
     const interval = setInterval(updateProgress, PROGRESS_UPDATE_INTERVAL_MS);
     return () => clearInterval(interval);
-  }, [isTranscribing, createdAt, fileDuration, completedSteps, totalSteps]);
+  }, [isTranscribing, createdAt, fileDuration, completedSteps, totalSteps, totalSteps]);
 
   const statusText = isTranscribing
     ? "🎙️ Transcribing..."
@@ -71,7 +74,7 @@ export function CompactProgress({
         </span>
       </div>
       <div className="relative h-2 bg-emerald-100 rounded-full overflow-hidden">
-        <div 
+        <div
           className="absolute inset-y-0 left-0 progress-emerald rounded-full transition-all duration-300"
           style={{ width: `${progress}%` }}
         />
