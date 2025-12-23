@@ -19,7 +19,7 @@ import {
   type PlanName,
 } from "./tier-config";
 
-type Auth = ReturnType<typeof clerkAuth>;
+type Auth = Awaited<ReturnType<typeof clerkAuth>>;
 
 export interface UploadValidationResult {
   allowed: boolean;
