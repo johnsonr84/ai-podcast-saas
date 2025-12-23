@@ -13,11 +13,9 @@ import type { Auth } from "@clerk/nextjs/server";
 import { convex } from "@/lib/convex-client";
 import { api } from "@/convex/_generated/api";
 import {
-  FEATURES,
   PLAN_FEATURES,
   PLAN_LIMITS,
   type FeatureName,
-  type PlanLimits,
   type PlanName,
 } from "./tier-config";
 
@@ -52,12 +50,13 @@ export async function checkUploadLimits(
   // Get user's plan using Clerk's has() method
   const { has } = auth;
   let plan: PlanName = "free";
+
   if (has?.({ plan: "ultra" })) {
     plan = "ultra";
   } else if (has?.({ plan: "pro" })) {
     plan = "pro";
   }
-  
+
   const limits = PLAN_LIMITS[plan];
 
   // Check file size limit
@@ -65,7 +64,10 @@ export async function checkUploadLimits(
     return {
       allowed: false,
       reason: "file_size",
-      message: `File size (${(fileSize / (1024 * 1024)).toFixed(1)}MB) exceeds your plan limit of ${(limits.maxFileSize / (1024 * 1024)).toFixed(0)}MB`,
+      message: `File size (${(fileSize / (1024 * 1024)).toFixed(1)}MB) exceeds your plan limit of ${(
+        limits.maxFileSize /
+        (1024 * 1024)
+      ).toFixed(0)}MB`,
     };
   }
 
@@ -85,6 +87,7 @@ export async function checkUploadLimits(
     // FREE: count all projects (including deleted)
     // PRO: count only active projects
     const includeDeleted = plan === "free";
+
     const projectCount = await convex.query(api.projects.getUserProjectCount, {
       userId,
       includeDeleted,
@@ -94,7 +97,9 @@ export async function checkUploadLimits(
       return {
         allowed: false,
         reason: "project_limit",
-        message: `You've reached your plan limit of ${limits.maxProjects} ${plan === "free" ? "total" : "active"} projects`,
+        message: `You've reached your plan limit of ${limits.maxProjects} ${
+          plan === "free" ? "total" : "active"
+        } projects`,
         currentCount: projectCount,
         limit: limits.maxProjects,
       };
@@ -114,10 +119,7 @@ export async function checkUploadLimits(
  * @param feature - Feature name to check
  * @returns True if user has access to feature
  */
-export function checkFeatureAccess(
-  auth: Auth,
-  feature: FeatureName
-): boolean {
+export function checkFeatureAccess(auth: Auth, feature: FeatureName): boolean {
   const { has } = auth;
   return has ? has({ feature }) : false;
 }
@@ -154,4 +156,3 @@ export function getMinimumPlanForFeature(feature: FeatureName): PlanName {
   if (PLAN_FEATURES.pro.includes(feature)) return "pro";
   return "ultra";
 }
-

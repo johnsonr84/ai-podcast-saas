@@ -53,7 +53,19 @@ export const FEATURES = {
   SPEAKER_DIARIZATION: "speaker_diarization",
 } as const;
 
+/**
+ * ✅ Recommended patch:
+ * Keep FeatureName defined here (single source of truth),
+ * and import it from "@/lib/tier-config" everywhere else.
+ */
 export type FeatureName = (typeof FEATURES)[keyof typeof FEATURES];
+
+/**
+ * ✅ Recommended patch:
+ * Helpful type alias for the feature keys if you ever want
+ * "SUMMARY" | "SOCIAL_POSTS" etc.
+ */
+export type FeatureKey = keyof typeof FEATURES;
 
 /**
  * Features available to each plan
@@ -61,7 +73,7 @@ export type FeatureName = (typeof FEATURES)[keyof typeof FEATURES];
  *
  * Note: Transcription is available to ALL plans as core functionality
  */
-export const PLAN_FEATURES: Record<PlanName, FeatureName[]> = {
+export const PLAN_FEATURES: Record<PlanName, readonly FeatureName[]> = {
   free: [FEATURES.SUMMARY],
   pro: [
     FEATURES.SUMMARY,
@@ -78,7 +90,13 @@ export const PLAN_FEATURES: Record<PlanName, FeatureName[]> = {
     FEATURES.KEY_MOMENTS,
     FEATURES.SPEAKER_DIARIZATION,
   ],
-};
+} as const;
+
+/**
+ * ✅ Recommended patch:
+ * Derive a canonical list for dropdowns/validation.
+ */
+export const ALL_FEATURES: readonly FeatureName[] = Object.values(FEATURES);
 
 /**
  * Human-readable plan names for UI display
@@ -101,6 +119,9 @@ export const PLAN_PRICES: Record<PlanName, string> = {
 /**
  * Mapping from feature names to job names for retry/regeneration
  * Used to consolidate logic across actions and Inngest functions
+ *
+ * ✅ Recommended patch:
+ * Make sure the values are typed as a union.
  */
 export const FEATURE_TO_JOB_MAP = {
   [FEATURES.SOCIAL_POSTS]: "socialPosts",
@@ -113,3 +134,17 @@ export const FEATURE_TO_JOB_MAP = {
 
 export type JobName =
   (typeof FEATURE_TO_JOB_MAP)[keyof typeof FEATURE_TO_JOB_MAP];
+
+/**
+ * ✅ Recommended patch:
+ * Type guard helpers (optional, but very useful)
+ */
+export function isFeatureName(value: unknown): value is FeatureName {
+  return typeof value === "string" && (ALL_FEATURES as readonly string[]).includes(value);
+}
+
+export function assertFeatureName(value: unknown): asserts value is FeatureName {
+  if (!isFeatureName(value)) {
+    throw new Error(`Invalid feature name: ${String(value)}`);
+  }
+}
