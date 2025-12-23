@@ -19,6 +19,8 @@ import {
   type PlanName,
 } from "./tier-config";
 
+// Clerk auth() type can vary across versions (sometimes Promise-like).
+// Awaited<> makes this compatible either way.
 type Auth = Awaited<ReturnType<typeof clerkAuth>>;
 
 export interface UploadValidationResult {
@@ -113,8 +115,10 @@ export function checkFeatureAccess(auth: Auth, feature: FeatureName): boolean {
 
 /**
  * Get list of features available to a plan.
+ *
+ * NOTE: PLAN_FEATURES is readonly by design — keep it immutable.
  */
-export function getPlanFeatures(plan: PlanName): FeatureName[] {
+export function getPlanFeatures(plan: PlanName): readonly FeatureName[] {
   return PLAN_FEATURES[plan];
 }
 
