@@ -14,6 +14,13 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
+const jobStatusLiteral = v.union(
+  v.literal("pending"),
+  v.literal("running"),
+  v.literal("completed"),
+  v.literal("failed")
+);
+
 export default defineSchema({
   projects: defineTable({
     // User ownership - links to Clerk user ID
@@ -41,24 +48,22 @@ export default defineSchema({
     ),
 
     // Granular job status tracking - shows progress of individual processing steps
+    // ✅ PATCH: expanded to include per-output generation statuses
     jobStatus: v.optional(
       v.object({
-        transcription: v.optional(
-          v.union(
-            v.literal("pending"),
-            v.literal("running"),
-            v.literal("completed"),
-            v.literal("failed")
-          )
-        ),
-        contentGeneration: v.optional(
-          v.union(
-            v.literal("pending"),
-            v.literal("running"),
-            v.literal("completed"),
-            v.literal("failed")
-          )
-        ),
+        // Core pipeline stages
+        transcription: v.optional(jobStatusLiteral),
+
+        // Optional umbrella stage for “all content generation”
+        contentGeneration: v.optional(jobStatusLiteral),
+
+        // Per-output generation statuses (for granular UI progress)
+        keyMoments: v.optional(jobStatusLiteral),
+        summary: v.optional(jobStatusLiteral),
+        socialPosts: v.optional(jobStatusLiteral),
+        titles: v.optional(jobStatusLiteral),
+        hashtags: v.optional(jobStatusLiteral),
+        youtubeTimestamps: v.optional(jobStatusLiteral),
       })
     ),
 
